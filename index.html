@@ -1,1 +1,449 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অসম্পূর্ণ প্রজেক্ট: লোডশেডিং রিকভারি</title>
+    <style>
+        /* =======================================
+           CSS: গেমের স্টাইল
+           ======================================= */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            color: #333;
+            text-align: center;
+        }
 
+        #game-container {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #555;
+            position: relative;
+            overflow: hidden;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* প্রাথমিক স্ক্রিন */
+        #game-start-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-color: #e0f7fa;
+            padding: 20px;
+        }
+
+        #completion-meter {
+            background-color: #ccc;
+            width: 80%;
+            height: 30px;
+            margin: 20px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #completion-progress {
+            width: 95%; /* 95% কমপ্লিট দেখানো */
+            height: 100%;
+            background-color: #4caf50;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* অন্ধকার মোড */
+        #dark-mode-screen {
+            background-color: #000;
+            color: #fff;
+            height: 100%;
+            display: none; /* জাভাস্ক্রিপ্ট দ্বারা দেখানো হবে */
+            position: relative;
+            cursor: none; /* কাস্টম টর্চ কার্সরের জন্য */
+        }
+
+        /* টর্চের আলো: মাউসের সাথে ঘোরানো হবে (JS দ্বারা box-shadow আপডেট হবে) */
+        #flashlight-area {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: box-shadow 0.1s;
+        }
+
+        /* HUD - রাগ মিটার এবং মেসেজ */
+        #hud {
+            position: absolute;
+            top: 10px;
+            width: 95%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 10;
+        }
+
+        #mood-meter-bar {
+            width: 200px;
+            height: 20px;
+            background-color: #555;
+            border: 1px solid #fff;
+            position: relative;
+        }
+
+        #mood-progress {
+            height: 100%;
+            background-color: red;
+            transition: width 0.3s;
+        }
+
+        #game-messages {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 10px;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            text-align: center;
+            border-radius: 5px;
+            z-index: 10;
+        }
+
+        /* টার্গেট অ্যাসেট */
+        .target {
+            position: absolute;
+            opacity: 0.1; /* প্রথমে লুকানো */
+            cursor: pointer;
+            transition: opacity 0.3s;
+            border: 2px dashed transparent; /* ডিবাগ করার জন্য */
+        }
+
+        .target.lit {
+            opacity: 1; /* টর্চের আলো পড়লে দৃশ্যমান */
+            border-color: yellow;
+        }
+
+        #cat-target {
+            width: 100px;
+            height: 100px;
+            background: url('assets/cat.png') no-repeat center center / contain; /* অ্যাসেট যোগ করুন */
+            top: 250px;
+            left: 350px;
+        }
+        
+        #dial-number-area {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            z-index: 10;
+        }
+        #dial-number-area button {
+            padding: 8px 12px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* চূড়ান্ত স্ক্রিন */
+        #final-screen {
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            color: white;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="loadshedding-audio" src="assets/loadshedding_start.mp3" preload="auto"></audio> <audio id="power-on-audio" src="assets/power_on_sound.mp3" preload="auto"></audio> <audio id="error-audio" src="assets/error_buzz.mp3" preload="auto"></audio> <div id="game-container">
+        
+        <div id="game-start-screen">
+            <h1>গুরুত্বপূর্ণ প্রজেক্ট - সেভ হয়নি!</h1>
+            <p>আপনার শেষ ৫ ঘণ্টার কাজ সেভ করার জন্য শেষ ক্লিকে আছেন। এখনই লোডশেডিং হতে পারে!</p>
+            <div id="completion-meter">
+                <div id="completion-progress">৯৯% সম্পন্ন!</div>
+            </div>
+            <button onclick="startPreLoadshedding()" style="padding: 10px 20px; font-size: 18px; cursor: pointer;">শেষ ক্লিক করুন!</button>
+        </div>
+
+        <div id="dark-mode-screen" class="hidden">
+            <div id="hud">
+                <span style="font-weight: bold;">সময়: <span id="time-left">১০ সেকেন্ড</span></span>
+                <div>
+                    <span>রাগ: </span>
+                    <div id="mood-meter-bar"><div id="mood-progress"></div></div>
+                </div>
+            </div>
+
+            <div id="flashlight-area">
+                <img id="fuse-box" src="assets/fuse_box.png" class="target" style="width:120px; height:180px; top: 150px; left: 100px;" alt="ফিউজ বক্স">
+                <img id="meter-box" src="assets/meter_box.png" class="target hidden" style="width:150px; height:150px; top: 350px; left: 600px;" alt="মিটার বক্স">
+                <img id="electric-pole" src="assets/pole.png" class="target hidden" style="width:100px; height:200px; top: 100px; left: 400px;" alt="ইলেকট্রিক খুঁটি">
+                
+                <div id="cat-target" class="target hidden"></div> <div id="project-panic-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: yellow; font-size: 24px;"></div>
+            </div>
+            
+            <div id="game-messages">লোডশেডিং হয়েছে! মেজাজ শান্ত রাখুন এবং ফিউজ বক্স খুঁজুন!</div>
+            
+            <div id="dial-number-area" class="hidden">
+                <p>অফিসের নম্বর ডায়াল করুন (555):</p>
+                <input type="text" id="dial-input" maxlength="3" readonly style="font-size: 20px; width: 100px; text-align: center; margin-bottom: 10px;">
+                <div id="keypad">
+                    <button onclick="dialPad(5)">5</button>
+                    <button onclick="dialPad(5)">5</button>
+                    <button onclick="dialPad(5)">5</button>
+                    <button onclick="dialPad('Dial')" style="background-color: #4CAF50; color: white;">ডায়াল</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="final-screen" class="hidden">
+            </div>
+
+    </div>
+
+    <script>
+        // =======================================
+        // JavaScript: গেমের লজিক
+        // =======================================
+        let currentStep = 0; // 0: প্রি-লোডশেডিং, 1: ফিউজ চেক, 2: মিটার চেক, 3: পোল চেক, 4: কল
+        let moodLevel = 0;
+        const MAX_MOOD = 90;
+        const FUSE_BOX_POS = { x: 100, y: 150, w: 120, h: 180 };
+        const METER_BOX_POS = { x: 600, y: 350, w: 150, h: 150 };
+
+        let catRemoved = false;
+        let timerInterval;
+
+        // গেমের অ্যাসেট এবং এলিমেন্ট
+        const elements = {
+            startScreen: document.getElementById('game-start-screen'),
+            darkScreen: document.getElementById('dark-mode-screen'),
+            finalScreen: document.getElementById('final-screen'),
+            flashlight: document.getElementById('flashlight-area'),
+            messages: document.getElementById('game-messages'),
+            moodBar: document.getElementById('mood-progress'),
+            fuseBox: document.getElementById('fuse-box'),
+            meterBox: document.getElementById('meter-box'),
+            pole: document.getElementById('electric-pole'),
+            catTarget: document.getElementById('cat-target'),
+            dialArea: document.getElementById('dial-number-area'),
+            dialInput: document.getElementById('dial-input'),
+            audioLoadshedding: document.getElementById('loadshedding-audio'),
+            audioPowerOn: document.getElementById('power-on-audio'),
+            audioError: document.getElementById('error-audio')
+        };
+
+        // --- কোর ফাংশন: মেজাজ মিটার ম্যানেজমেন্ট ---
+        function updateMoodMeter(amount) {
+            if (currentStep === 0) return; // প্রি-লোডশেডিংয়ে রাগ বাড়বে না
+
+            moodLevel = Math.min(100, moodLevel + amount);
+            elements.moodBar.style.width = `${moodLevel}%`;
+
+            if (moodLevel >= MAX_MOOD) {
+                endGame(false, "আপনার রাগ এতটাই বেড়ে গিয়েছিল যে গেমের প্রোগ্রামিং ক্র্যাশ করলো! লোডশেডিংয়ের জন্য আপনাকে ধন্যবাদ।");
+            }
+        }
+
+        // --- কোর ফাংশন: গেম শেষ ---
+        function endGame(isSuccess, message) {
+            clearInterval(timerInterval);
+            elements.darkScreen.style.display = 'none';
+            elements.finalScreen.style.display = 'flex';
+            elements.flashlight.removeEventListener('mousemove', handleFlashlightMove);
+
+            let finalMessage;
+            if (isSuccess) {
+                elements.audioPowerOn.play();
+                finalMessage = `<h1>বিজয়! বিদ্যুৎ ফিরে এসেছে!</h1>
+                    <p>আপনার শেষ ৫ ঘণ্টার কাজ সেভ হলো। তবে ল্যাপটপের ব্যাটারি এত কমে গেছিল যে সেভ হওয়ার সাথে সাথেই ল্যাপটপ বন্ধ হয়ে গেলো! আবার শুরু করুন!</p>`;
+            } else {
+                elements.audioError.play();
+                finalMessage = `<h1>দুঃখিত, মিশন ব্যর্থ!</h1><p>${message}</p>`;
+            }
+
+            elements.finalScreen.innerHTML = `${finalMessage}
+                <button onclick="location.reload()" style="padding: 10px 20px; font-size: 18px; cursor: pointer; margin-top: 20px;">পুনরায় শুরু করুন</button>`;
+        }
+        
+        // --- গেম শুরু: প্রি-লোডশেডিং প্যানিক ---
+        function startPreLoadshedding() {
+            elements.startScreen.style.display = 'none';
+            elements.darkScreen.style.display = 'block';
+
+            let preTimer = 5; // 5 সেকেন্ডের দ্রুত প্যানিক
+            document.getElementById('project-panic-message').innerHTML = `কাজ সেভ হয়নি! লোডশেডিং শুরু হতে আর মাত্র: ${preTimer} সেকেন্ড!`;
+
+            timerInterval = setInterval(() => {
+                preTimer--;
+                document.getElementById('project-panic-message').innerHTML = `কাজ সেভ হয়নি! লোডশেডিং শুরু হতে আর মাত্র: ${preTimer} সেকেন্ড!`;
+
+                if (preTimer <= 0) {
+                    clearInterval(timerInterval);
+                    startLoadsheddingMission();
+                }
+            }, 1000);
+        }
+
+        // --- মিশন শুরু: লোডশেডিং এবং ফ্লাশলাইট ---
+        function startLoadsheddingMission() {
+            elements.audioLoadshedding.play();
+            document.getElementById('project-panic-message').innerHTML = ''; // মেসেজ সরান
+            elements.messages.innerHTML = "লোডশেডিং হয়েছে! মেজাজ শান্ত রাখুন এবং ফিউজ বক্স খুঁজুন!";
+            currentStep = 1;
+            elements.flashlight.addEventListener('mousemove', handleFlashlightMove);
+            elements.fuseBox.addEventListener('click', handleFuseBoxClick);
+            
+            // রাগ বাড়ানোর টাইমার
+            timerInterval = setInterval(() => {
+                updateMoodMeter(2); // প্রতি 1.5 সেকেন্ডে 2% রাগ বাড়ান
+            }, 1500);
+        }
+
+        // --- ফ্লাশলাইট লজিক ---
+        function handleFlashlightMove(e) {
+            const rect = elements.flashlight.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // টর্চের আলোর পজিশন সেট করুন
+            elements.flashlight.style.boxShadow = `0 0 0 1000px rgba(0,0,0,0.95) inset, radial-gradient(circle 50px at ${x}px ${y}px, rgba(255,255,255,0.7), transparent)`;
+            
+            // টার্গেট চেক করুন
+            checkTargetProximity(x, y); 
+        }
+
+        function isNear(px, py, target) {
+            const rect = target.getBoundingClientRect();
+            const tx = rect.left - elements.darkScreen.getBoundingClientRect().left + rect.width / 2;
+            const ty = rect.top - elements.darkScreen.getBoundingClientRect().top + rect.height / 2;
+            
+            const dist = Math.sqrt(Math.pow(px - tx, 2) + Math.pow(py - ty, 2));
+            return dist < 100; // 100 পিক্সেলের মধ্যে থাকলে
+        }
+
+        function checkTargetProximity(x, y) {
+            // শুধুমাত্র কারেন্ট স্টেপের টার্গেটগুলো চেক করুন
+            const targets = [elements.fuseBox, elements.meterBox, elements.pole, elements.catTarget];
+            targets.forEach(target => target.classList.remove('lit'));
+
+            if (currentStep === 1 && isNear(x, y, elements.fuseBox)) {
+                elements.fuseBox.classList.add('lit');
+                elements.messages.innerHTML = "ফিউজ বক্স পাওয়া গেছে! দ্রুত ক্লিক করুন!";
+            } else if (currentStep === 1.5 && isNear(x, y, elements.catTarget)) {
+                elements.catTarget.classList.add('lit');
+                elements.messages.innerHTML = "বিড়ালকে সরাতে মাছের লোভ দেখান (ক্লিক)!";
+            } else if (currentStep === 2 && isNear(x, y, elements.meterBox)) {
+                elements.meterBox.classList.add('lit');
+                elements.messages.innerHTML = "মিটার বক্স পাওয়া গেছে! মিটারে কিছু দেখাচ্ছে না। ক্লিক করুন!";
+            } else if (currentStep === 3 && isNear(x, y, elements.pole)) {
+                elements.pole.classList.add('lit');
+                elements.messages.innerHTML = "ইলেকট্রিক খুঁটি দেখা যাচ্ছে। ফিউজ আছে কিনা দেখতে কল করুন!";
+            } else {
+                 elements.messages.innerHTML = "অন্ধকারে কিছু খুঁজে পাচ্ছি না...";
+            }
+        }
+        
+        // --- মিশন হ্যান্ডলার ---
+        function handleFuseBoxClick() {
+            if (currentStep === 1) {
+                elements.messages.innerHTML = "ওহ না! ফিউজ বক্সে একটি বিড়াল শুয়ে আছে! তাকে সরাতে হবে!";
+                elements.fuseBox.removeEventListener('click', handleFuseBoxClick);
+                elements.catTarget.classList.remove('hidden');
+                elements.catTarget.addEventListener('click', handleCatRemoval);
+                currentStep = 1.5;
+                updateMoodMeter(10); // অতিরিক্ত রাগ
+            }
+        }
+
+        function handleCatRemoval() {
+            if (currentStep === 1.5) {
+                elements.messages.innerHTML = "বিড়াল সরেছে! কিন্তু ফিউজ ঠিক আছে। মিটার চেক করুন!";
+                elements.catTarget.removeEventListener('click', handleCatRemoval);
+                elements.catTarget.classList.add('hidden');
+                elements.meterBox.classList.remove('hidden');
+                elements.meterBox.addEventListener('click', handleMeterBoxClick);
+                elements.fuseBox.classList.add('hidden');
+                currentStep = 2;
+                updateMoodMeter(-5); // সামান্য স্বস্তি
+            }
+        }
+
+        function handleMeterBoxClick() {
+            if (currentStep === 2) {
+                elements.messages.innerHTML = "মিটারে লাইন নেই। বাইরে খুঁটি বা অফিসে কল করুন! অফিস নম্বর: 555।";
+                elements.meterBox.removeEventListener('click', handleMeterBoxClick);
+                elements.pole.classList.remove('hidden');
+                elements.dialArea.style.display = 'block'; // ডায়াল প্যাড দেখান
+                currentStep = 3;
+            }
+        }
+
+        // --- ফোন ডায়াল মিনি-গেম ---
+        function dialPad(value) {
+            if (value === 'Dial') {
+                if (elements.dialInput.value === '555') {
+                    elements.messages.innerHTML = "কল হয়েছে! অফিসের লোক বলছে ফিউজ মাঠে পড়ে আছে!";
+                    elements.dialArea.style.display = 'none';
+                    // ফিউজ খোঁজার চূড়ান্ত মিশন
+                    handleFinalFuseHunt();
+                } else {
+                    elements.messages.innerHTML = "ভুল নম্বর! মেজাজ খারাপ করবেন না, আবার চেষ্টা করুন।";
+                    elements.dialInput.value = '';
+                    updateMoodMeter(10);
+                }
+            } else {
+                if (elements.dialInput.value.length < 3) {
+                    elements.dialInput.value += value;
+                }
+            }
+        }
+
+        let isHuntingFuse = false;
+
+        function handleFinalFuseHunt() {
+             elements.messages.innerHTML = "খেলার মাঠে ফিউজ-রূপী বলটি খুঁজুন! দ্রুত ক্লিক করুন!";
+             isHuntingFuse = true;
+             // এখানে ফিউজ-রূপী বল (একটি ছোট div) র‍্যান্ডমলি স্থাপন করুন এবং ক্লিকের জন্য অপেক্ষা করুন
+             // এখানে আমরা সরাসরি বিজয়ের লজিক দেব
+             setTimeout(() => {
+                 elements.messages.innerHTML = "ফিউজ খুঁজে পাওয়া গেছে! অপেক্ষা করুন...";
+                 updateMoodMeter(-20);
+                 setTimeout(() => {
+                     endGame(true, "");
+                 }, 2000);
+             }, 3000);
+        }
+
+        // গেম লোড হলে রাগ মিটার সেট করুন
+        window.onload = () => {
+             updateMoodMeter(0);
+        };
+    </script>
+</body>
+</html>
