@@ -3,163 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>লোডশেডিং রিকভারি - Ultra Mindblowing</title>
+<title>লোডশেডিং রিকভারি - Ultra Advanced</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
-body,html{width:100%;height:100%;overflow:hidden;background:#071126;position:relative;color:#0ff;}
-.hidden{display:none;}
-canvas{position:absolute;inset:0;pointer-events:none;}
-#flash{position:absolute;inset:0;pointer-events:auto;background:radial-gradient(circle 160px at 50% 50%, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at 50% 50%, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%);}
-#hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:999px;border:1px solid #0ff;color:#0ff;font-size:14px;z-index:50;}
-#hud{position:absolute;top:0;left:0;width:220px;height:100%;background:rgba(255,255,255,0.02);padding:10px;border-right:1px solid #0ff;color:#0ff;z-index:20;}
-#hud div{margin-bottom:10px;}
-#gameArea{position:absolute;inset:0;z-index:1;overflow:hidden;}
-#buttonPanel{position:absolute;top:50%;right:10px;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:30;}
-.btn{position:relative;padding:10px 20px;border:none;border-radius:10px;font-weight:bold;color:#000;background:#0ff;overflow:hidden;cursor:pointer;transition:0.3s;box-shadow:0 0 10px #0ff;}
-.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #0ff;}
-.btn span.object{position:absolute;width:15px;height:15px;background:yellow;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);animation:floatObj 2s infinite alternate;}
-@keyframes floatObj{0%{transform:translate(-50%,-50%) translateY(0);}100%{transform:translate(-50%,-50%) translateY(-10px);}}
-.target{position:absolute;background-size:contain;background-repeat:no-repeat;cursor:pointer;z-index:5;}
-.flicker{animation:flickerAnim 0.1s infinite;}
-@keyframes flickerAnim{0%{opacity:0.1;}50%{opacity:1;}100%{opacity:0.2;}}
-.confetti{position:absolute;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:100;opacity:1;}
-.zoom-effect{animation:zoomEffect 1s ease forwards;}
-@keyframes zoomEffect{0%{transform:scale(0.8);opacity:0.5;}100%{transform:scale(1);opacity:1;}}
+  body, html { margin:0; padding:0; height:100%; font-family:sans-serif; background:#071126; overflow:hidden; }
+  .container { display:flex; height:100%; width:100%; }
+  .sidebar { width:280px; background:rgba(0,0,0,0.3); border-right:2px solid #0ff; padding:10px; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
+  .sidebar button { padding:10px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; background:#0ff; color:#000; transition:0.2s; }
+  .sidebar button:hover { transform:scale(1.05); box-shadow:0 0 15px #0ff; }
+  .game-area { flex:1; position:relative; overflow:hidden; }
+  .target { position:absolute; background-size:contain; background-repeat:no-repeat; cursor:pointer; }
+  #fuse { width:120px; height:180px; left:6%; top:24%; background-image:url('assets/fuse_box.png'); }
+  #cat { width:120px; height:120px; left:40%; top:38%; background-image:url('assets/cat.png'); display:none; }
+  #meter { width:150px; height:150px; left:68%; top:56%; background-image:url('assets/meter_box.png'); display:none; }
+  #pole { width:120px; height:220px; left:46%; top:8%; background-image:url('assets/pole.png'); display:none; }
+  #flash { position:absolute; inset:0; z-index:30; pointer-events:auto; }
+  canvas { position:absolute; inset:0; z-index:20; pointer-events:none; }
+  .hint { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.5); color:#0ff; padding:8px 16px; border-radius:20px; font-size:14px; border:1px solid #0ff; z-index:40; }
+  .overlay { position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:50; }
+  .overlay-box { background:linear-gradient(to bottom,#00131a,#001b22); padding:20px; border-radius:16px; text-align:center; border:2px solid #0ff; max-width:400px; }
+  .overlay-box h2 { color:#0ff; font-size:24px; margin-bottom:10px; }
+  .overlay-box p { color:#fff; margin-bottom:15px; }
+  .overlay-box button { margin:5px; padding:10px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; background:#0ff; color:#000; transition:0.2s; }
+  .overlay-box button:hover { transform:scale(1.05); box-shadow:0 0 15px #0ff; }
 </style>
 </head>
 <body>
+<div class="container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <button id="startBtn">🎮 START</button>
+    <button id="saveBtn">💾 সেভ</button>
+    <button id="loadBtn">📂 লোড</button>
+    <button id="resetBtn">♻️ রিসেট</button>
+    <button id="soundBtn">🔊 সাউন্ড ON</button>
+    <button id="creditsBtn">✨ Developed by AHSAN HABIB</button>
+  </div>
 
-<!-- HUD -->
-<div id="hud">
-  <div>সময়: <span id="timer">90</span>s</div>
-  <div>রাগ: <div style="width:100%;height:10px;background:#062022;border:1px solid #0ff;"><div id="moodBar" style="width:6%;height:100%;background:linear-gradient(to right,red,orange)"></div></div></div>
-  <div>স্টেজ: <span id="stage">প্রি-প্যানিক</span></div>
-</div>
-
-<!-- Game Area -->
-<div id="gameArea">
-  <div id="flash"></div>
-  <canvas id="particles"></canvas>
-  <div id="typingArea"></div>
-
-  <div id="fuse" class="target" style="left:50px;top:100px;width:100px;height:150px;background-image:url('assets/fuse_box.png');"></div>
-  <div id="cat" class="target hidden" style="left:150px;top:300px;width:120px;height:120px;background-image:url('assets/cat.png');"></div>
-  <div id="meter" class="target hidden" style="left:500px;top:200px;width:150px;height:150px;background-image:url('assets/meter_box.png');"></div>
-  <div id="pole" class="target hidden" style="left:400px;top:50px;width:120px;height:220px;background-image:url('assets/pole.png');"></div>
-</div>
-
-<!-- Button Panel -->
-<div id="buttonPanel">
-  <button class="btn" onclick="saveGame()">💾 Save <span class="object"></span></button>
-  <button class="btn" onclick="loadGame()">📂 Load <span class="object"></span></button>
-  <button class="btn" onclick="resetGame()">♻️ Reset <span class="object"></span></button>
-  <button class="btn" onclick="toggleSound()">🔊 Sound <span class="object"></span></button>
-  <button class="btn" onclick="alert('Credits: Developed by AHSAN HABIB\nFB: https://www.facebook.com/ahm.habib.39')">🏆 Credits <span class="object"></span></button>
-</div>
-
-<!-- Overlay -->
-<div id="overlay">
-  <div id="overlayContent" style="background:linear-gradient(to bottom,#00131a,#001b22);padding:20px;border-radius:15px;text-align:center;border:2px solid #0ff;">
-    <h2 id="overlayTitle">শুরু করুন</h2>
-    <p id="overlayText">তুমি গুরুত্বপূর্ণ কাজ করছ, হঠাৎ electricity চলে গেল! START চাপুন।</p>
-    <button class="btn" onclick="startGame()">🎮 START <span class="object"></span></button>
+  <!-- Game Area -->
+  <div class="game-area" id="gameArea">
+    <div id="fuse" class="target"></div>
+    <div id="cat" class="target"></div>
+    <div id="meter" class="target"></div>
+    <div id="pole" class="target"></div>
+    <canvas id="particles"></canvas>
+    <div id="flash"></div>
+    <div class="hint" id="hint">মাউস/আঙুল দ্বারা ফ্ল্যাশলাইট নিয়ন্ত্রণ করুন</div>
   </div>
 </div>
 
-<div id="hint">মাউস/আঙুল নিয়ে খেলুন</div>
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <h2>শুরু করুন</h2>
+    <p>তুমি গুরুত্বপূর্ণ কাজ করছিলে, কিন্তু হঠাৎ করে electricity চলে গেছে! কাজ শেষ করতে START চাপুন।</p>
+    <button id="overlayStart">🎮 START</button>
+  </div>
+</div>
 
 <script>
-// State
-let step=0,mood=6,timer=90,running=false,soundsOn=true;
-const flash=document.getElementById('flash');
-const particles=document.getElementById('particles');
-const ctx=particles.getContext('2d');
-let particleStore=[],confettiStore=[],hintTimer=null;
+const startBtn = document.getElementById('startBtn');
+const saveBtn = document.getElementById('saveBtn');
+const loadBtn = document.getElementById('loadBtn');
+const resetBtn = document.getElementById('resetBtn');
+const soundBtn = document.getElementById('soundBtn');
+const creditsBtn = document.getElementById('creditsBtn');
+const overlay = document.getElementById('overlay');
+const overlayStart = document.getElementById('overlayStart');
+const hint = document.getElementById('hint');
+const gameArea = document.getElementById('gameArea');
+const flash = document.getElementById('flash');
+const particlesCanvas = document.getElementById('particles');
+const ctx = particlesCanvas.getContext('2d');
+let raf;
 
-// Typing
-const typingArea=document.getElementById('typingArea');
-let typingContent="সরাসরি গুরুত্বপূর্ণ কাজ করতে গিয়ে হঠাৎ electricity চলে গেল। Fuse খুঁজে কাজ শেষ করতে হবে।";
-let typingIndex=0;
-function typeLoop(){if(!running)return;typingArea.innerText=typingContent.slice(0,typingIndex);typingIndex++;if(typingIndex>typingContent.length)typingIndex=0;setTimeout(typeLoop,50);}
-typeLoop();
+let soundsOn = true;
+let running = false;
+let mood = 6;
+let timer = 90;
+let step = 0;
+let found = { fuse:false, cat:false, meter:false, pole:false };
+let particleStore = [];
 
-// Audio
-let ambient=new Audio('assets/ambient_loop.mp3'); ambient.loop=true;
+let ambient = new Audio('assets/mission_loop.mp3');
+ambient.loop = true;
 
-// Start Game
-function startGame(){
-  document.getElementById('overlay').style.display='none';
-  running=true;step=0;updateStage();
-  if(soundsOn)ambient.play().catch(()=>{});
-  let pre=4;showHint(`লোডশেডিং শুরু হতে আর ${pre} সেকেন্ড`);
-  const p=setInterval(()=>{
-    pre--; if(pre>0)showHint(`লোডশেডিং শুরু হতে আর ${pre} সেকেন্ড`);
-    else{clearInterval(p);beginMission();}
-  },1000);
-}
-
-// Mission begins
-function beginMission(){step=1;updateStage();showHint('লোডশেডিং হয়েছে — ফিউজ খুঁজুন!');document.getElementById('fuse').classList.remove('hidden');flickerEffect();}
-
-// Timer & Mood
-setInterval(()=>{if(running){timer--;document.getElementById('timer').innerText=timer;if(timer<=0)endGame(false,'সময় শেষ!');}},1000);
-setInterval(()=>{if(running){mood=Math.min(100,mood+2);document.getElementById('moodBar').style.width=mood+'%';if(mood>=90)endGame(false,'রাগ বেশি হয়ে গেল!');}},1500);
-
-// Flashlight
-document.addEventListener('mousemove',onMove);
-document.addEventListener('touchmove',onMove);
-function onMove(e){
-  const x=e.touches?e.touches[0].clientX:e.clientX;
-  const y=e.touches?e.touches[0].clientY:e.clientY;
-  flash.style.background=`radial-gradient(circle 160px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at ${x}px ${y}px, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%)`;
-}
-
-// Hint
-function showHint(t,ms=2500){document.getElementById('hint').innerText=t;if(hintTimer)clearTimeout(hintTimer);hintTimer=setTimeout(()=>{document.getElementById('hint').innerText='';},ms);}
-
-// Click interactions
-document.getElementById('fuse').onclick=function(e){if(step!==1)return;step=1.5;updateStage();document.getElementById('cat').classList.remove('hidden');spawnSparks(e.clientX,e.clientY,20);showHint('বিড়াল সরান');playClick();}
-document.getElementById('cat').onclick=function(e){if(step!==1.5)return;step=2;updateStage();document.getElementById('cat').classList.add('hidden');document.getElementById('meter').classList.remove('hidden');spawnSparks(e.clientX,e.clientY,14);showHint('মিটার চেক করুন');playClick();}
-document.getElementById('meter').onclick=function(e){if(step!==2)return;step=3;updateStage();document.getElementById('pole').classList.remove('hidden');showPhonePrompt();playClick();}
-document.getElementById('pole').onclick=function(e){if(step!==3)return;step=4;updateStage();setTimeout(win,2500);playClick();}
-
-// Win / End
-function win(){running=false;ambient.pause();typingArea.innerText='';showHint('বিদ্যুৎ ফিরে এসেছে — কাজ শেষ হয়েছে!');launchConfetti();document.body.classList.add('zoom-effect');setTimeout(()=>{document.body.classList.remove('zoom-effect');},1500);}
-function endGame(success,message){running=false;ambient.pause();typingArea.innerText='';document.body.classList.remove('flicker');alert(message);document.getElementById('overlay').style.display='flex';document.getElementById('overlayTitle').innerText=success?'বিজয়!':'মিশন ব্যর্থ!';document.getElementById('overlayText').innerText=message;}
-
-// Sparks
-function spawnSparks(x,y,n=12){for(let i=0;i<n;i++){particleStore.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-1.8)*3,life:30+Math.random()*30,size:1+Math.random()*2,color:`rgba(255,${150+Math.floor(Math.random()*100)},0,1)`});}}
-function tickParticles(){ctx.clearRect(0,0,particles.width,particles.height);for(let i=particleStore.length-1;i>=0;i--){const p=particleStore[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life--;ctx.beginPath();ctx.globalAlpha=Math.max(0,p.life/60);ctx.fillStyle=p.color;ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();if(p.life<=0)particleStore.splice(i,1);}requestAnimationFrame(tickParticles);}
-tickParticles();
-
-// Resize canvas
-function resizeCanvas(){particles.width=window.innerWidth;particles.height=window.innerHeight;}
+function resizeCanvas(){ particlesCanvas.width=gameArea.clientWidth; particlesCanvas.height=gameArea.clientHeight; }
 window.addEventListener('resize',resizeCanvas);
 resizeCanvas();
 
-// Audio helpers
-function playClick(){if(!soundsOn)return;try{new Audio('assets/click.mp3').play().catch(()=>{});}catch(e){}}
-function playError(){if(!soundsOn)return;try{new Audio('assets/error_buzz.mp3').play().catch(()=>{});}catch(e){}}
+function typeHint(t, ms=2500){
+  hint.textContent = t;
+  setTimeout(()=>{ hint.textContent = 'মাউস/আঙুল দ্বারা ফ্ল্যাশলাইট নিয়ন্ত্রণ করুন'; }, ms);
+}
 
-// Save / Load
-function saveGame(){localStorage.setItem('ls_save',JSON.stringify({step,mood,timer,running}));showHint('সেভ করা হয়েছে');}
-function loadGame(){const raw=localStorage.getItem('ls_save');if(!raw){showHint('কোনো সেভ পাওয়া যায় নি');return;}try{const s=JSON.parse(raw);step=s.step||0;mood=s.mood||6;timer=s.timer||90;running=s.running||false;updateStage();document.getElementById('timer').innerText=timer;document.getElementById('moodBar').style.width=mood+'%';showHint('সেভ লোড হয়েছে');}catch(e){console.warn(e);showHint('লোড সমস্যা');}}
-function resetGame(){if(confirm('রিসেট করবেন?')){localStorage.removeItem('ls_save');window.location.reload();}}
-function toggleSound(){soundsOn=!soundsOn;if(!soundsOn)ambient.pause();else if(running)ambient.play().catch(()=>{});}
+// flashlight follow
+gameArea.addEventListener('mousemove', (e)=>{
+  const rect = flash.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  flash.style.background = `radial-gradient(circle 160px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at ${x}px ${y}px, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%)`;
+});
 
-// Stage / HUD
-function updateStage(){const stages=['প্রি-প্যানিক','ফিউজ খোঁজা','বিড়াল সরান','মিটার চেক','খুঁটি চেক','ফাইনাল'];document.getElementById('stage').innerText=stages[Math.floor(step)]||'অজানা';}
+// particles
+function spawnSparks(x,y,n=12){
+  for(let i=0;i<n;i++){
+    particleStore.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-1.8)*3,life:30+Math.random()*30,size:1+Math.random()*2,color:`rgba(255,${150+Math.floor(Math.random()*100)},0,1)`});
+  }
+}
+function tickParticles(){
+  ctx.clearRect(0,0,particlesCanvas.width,particlesCanvas.height);
+  for(let i=particleStore.length-1;i>=0;i--){
+    const p = particleStore[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.06; p.life--;
+    ctx.beginPath(); ctx.globalAlpha=Math.max(0,p.life/60); ctx.fillStyle=p.color;
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+    if(p.life<=0) particleStore.splice(i,1);
+  }
+  raf = requestAnimationFrame(tickParticles);
+}
+tickParticles();
 
-// Phone prompt
-function showPhonePrompt(){const num=prompt('অফিসে কল করুন — নম্বর ৩ সংখ্যায় লিখুন (টিপ: 555)','');if(num==='555'){mood=Math.max(0,mood-8);showHint('কল হয়েছে — মাঠে গিয়ে ফিউজ আনুন');}else{mood=Math.min(100,mood+12);showHint('ভুল নম্বর — রাগ বেড়ে গেল');playError();}document.getElementById('moodBar').style.width=mood+'%';}
+// button actions
+function startGame(){
+  overlay.style.display='none';
+  running=true;
+  step=1;
+  typeHint('লোডশেডিং হয়েছে — ফিউজ খুঁজুন!');
+  if(soundsOn) ambient.play().catch(()=>{});
+}
+function saveGame(){ localStorage.setItem('ls_save',JSON.stringify({step, mood, timer, found})); typeHint('সেভ করা হয়েছে'); }
+function loadGame(){ const raw=localStorage.getItem('ls_save'); if(!raw){typeHint('কোনো সেভ পাওয়া যায়নি'); return;} const s=JSON.parse(raw); step=s.step||0; mood=s.mood||0; timer=s.timer||90; found=s.found||found; typeHint('সেভ লোড হয়েছে'); updateVisibility(); }
+function resetGame(){ if(confirm('রিসেট করবেন?')){ localStorage.removeItem('ls_save'); window.location.reload(); } }
+function toggleSound(){ soundsOn=!soundsOn; soundBtn.textContent = soundsOn?'🔊 সাউন্ড ON':'🔇 সাউন্ড OFF'; if(soundsOn) ambient.play().catch(()=>{}); else ambient.pause(); }
+function openCredits(){ window.open('https://www.facebook.com/ahm.habib.39','_blank'); }
 
-// Flicker effect
-function flickerEffect(){document.body.classList.add('flicker');setTimeout(()=>{document.body.classList.remove('flicker');},10000);}
+function updateVisibility(){
+  document.getElementById('cat').style.display = step>=1.5?'block':'none';
+  document.getElementById('meter').style.display = step>=2?'block':'none';
+  document.getElementById('pole').style.display = step>=3?'block':'none';
+}
 
-// Confetti
-function launchConfetti(){for(let i=0;i<150;i++){let c=document.createElement('div');c.className='confetti';c.style.background=['#ff0','#0ff','#f0f','#f80'][Math.floor(Math.random()*4)];c.style.left=Math.random()*window.innerWidth+'px';c.style.top=Math.random()*window.innerHeight+'px';document.body.appendChild(c);let vx=(Math.random()-0.5)*8;let vy=Math.random()*-10-2;let life=100;confettiStore.push({el:c,vx,vy,life});}}
-function tickConfetti(){for(let i=confettiStore.length-1;i>=0;i--){const p=confettiStore[i];p.vy+=0.3;p.el.style.left=(parseFloat(p.el.style.left)+p.vx)+'px';p.el.style.top=(parseFloat(p.el.style.top)+p.vy)+'px';p.life--;p.el.style.opacity=p.life/100;if(p.life<=0){document.body.removeChild(p.el);confettiStore.splice(i,1);}}requestAnimationFrame(tickConfetti);}
-tickConfetti();
+startBtn.addEventListener('click',startGame);
+overlayStart.addEventListener('click',startGame);
+saveBtn.addEventListener('click',saveGame);
+loadBtn.addEventListener('click',loadGame);
+resetBtn.addEventListener('click',resetGame);
+soundBtn.addEventListener('click',toggleSound);
+creditsBtn.addEventListener('click',openCredits);
+
+// target interactions
+document.getElementById('fuse').addEventListener('click',(e)=>{
+  if(step!==1) return; spawnSparks(e.clientX,e.clientY,20); found.fuse=true; step=1.5; updateVisibility(); typeHint('ফিউজ পাওয়া গেছে — বিড়াল সরান');
+});
+document.getElementById('cat').addEventListener('click',(e)=>{
+  if(step!==1.5) return; spawnSparks(e.clientX,e.clientY,15); found.cat=true; step=2; updateVisibility(); typeHint('বিড়াল সরানো হয়েছে — মিটার চেক করুন');
+});
+document.getElementById('meter').addEventListener('click',(e)=>{
+  if(step!==2) return; spawnSparks(e.clientX,e.clientY,15); found.meter=true; step=3; updateVisibility(); typeHint('মিটার চেক সম্পন্ন — খুঁটি তে যান');
+});
+document.getElementById('pole').addEventListener('click',(e)=>{
+  if(step!==3) return; spawnSparks(e.clientX,e.clientY,20); found.pole=true; step=4; typeHint('ফাইনাল সম্পন্ন — বিদ্যুৎ ফিরে এসেছে!'); running=false; ambient.pause();
+});
+
 </script>
 </body>
 </html>
