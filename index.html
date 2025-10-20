@@ -6,22 +6,25 @@
 <title>লোডশেডিং রিকভারি - Ultra Mindblowing</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
-body,html{width:100%;height:100%;overflow:hidden;background:#071126;position:relative;}
-button{cursor:pointer;transition:0.2s;}
+body,html{width:100%;height:100%;overflow:hidden;background:#071126;position:relative;color:#0ff;}
 .hidden{display:none;}
-#flash{position:absolute;inset:0;pointer-events:auto;background:radial-gradient(circle 160px at 50% 50%, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at 50% 50%, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%);}
 canvas{position:absolute;inset:0;pointer-events:none;}
-#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:1000;}
-#overlayContent{background:linear-gradient(to bottom,#00131a,#001b22);padding:20px;border-radius:15px;text-align:center;border:2px solid #0ff;}
+#flash{position:absolute;inset:0;pointer-events:auto;background:radial-gradient(circle 160px at 50% 50%, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at 50% 50%, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%);}
 #hint{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:999px;border:1px solid #0ff;color:#0ff;font-size:14px;z-index:50;}
-#hud{position:absolute;top:0;left:0;width:200px;height:100%;background:rgba(255,255,255,0.02);padding:10px;border-right:1px solid #0ff;color:#0ff;z-index:20;}
+#hud{position:absolute;top:0;left:0;width:220px;height:100%;background:rgba(255,255,255,0.02);padding:10px;border-right:1px solid #0ff;color:#0ff;z-index:20;}
 #hud div{margin-bottom:10px;}
-.btn{padding:5px 10px;border-radius:5px;border:none;background:#0ff;color:#000;font-weight:bold;}
-.btn-small{padding:3px 6px;font-size:12px;}
-.target{position:absolute;background-size:contain;background-repeat:no-repeat;cursor:pointer;}
-#typingArea{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#0ff;font-family:monospace;font-size:16px;white-space:pre-wrap;z-index:15;opacity:0.85;}
+#gameArea{position:absolute;inset:0;z-index:1;overflow:hidden;}
+#buttonPanel{position:absolute;top:50%;right:10px;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:30;}
+.btn{position:relative;padding:10px 20px;border:none;border-radius:10px;font-weight:bold;color:#000;background:#0ff;overflow:hidden;cursor:pointer;transition:0.3s;box-shadow:0 0 10px #0ff;}
+.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #0ff;}
+.btn span.object{position:absolute;width:15px;height:15px;background:yellow;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);animation:floatObj 2s infinite alternate;}
+@keyframes floatObj{0%{transform:translate(-50%,-50%) translateY(0);}100%{transform:translate(-50%,-50%) translateY(-10px);}}
+.target{position:absolute;background-size:contain;background-repeat:no-repeat;cursor:pointer;z-index:5;}
 .flicker{animation:flickerAnim 0.1s infinite;}
 @keyframes flickerAnim{0%{opacity:0.1;}50%{opacity:1;}100%{opacity:0.2;}}
+.confetti{position:absolute;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:100;opacity:1;}
+.zoom-effect{animation:zoomEffect 1s ease forwards;}
+@keyframes zoomEffect{0%{transform:scale(0.8);opacity:0.5;}100%{transform:scale(1);opacity:1;}}
 </style>
 </head>
 <body>
@@ -31,50 +34,47 @@ canvas{position:absolute;inset:0;pointer-events:none;}
   <div>সময়: <span id="timer">90</span>s</div>
   <div>রাগ: <div style="width:100%;height:10px;background:#062022;border:1px solid #0ff;"><div id="moodBar" style="width:6%;height:100%;background:linear-gradient(to right,red,orange)"></div></div></div>
   <div>স্টেজ: <span id="stage">প্রি-প্যানিক</span></div>
-  <div>
-    <button class="btn-small" onclick="saveGame()">💾 সেভ</button>
-    <button class="btn-small" onclick="loadGame()">📂 লোড</button>
-    <button class="btn-small" onclick="resetGame()">♻️ রিসেট</button>
-    <button class="btn-small" onclick="toggleSound()">🔊 সাউন্ড</button>
-  </div>
-  <div>
-    <button class="btn-small" onclick="alert('Credits:\nDeveloped by AHSAN HABIB\nFB: https://www.facebook.com/ahm.habib.39')">🏆 Credits</button>
-  </div>
+</div>
+
+<!-- Game Area -->
+<div id="gameArea">
+  <div id="flash"></div>
+  <canvas id="particles"></canvas>
+  <div id="typingArea"></div>
+
+  <div id="fuse" class="target" style="left:50px;top:100px;width:100px;height:150px;background-image:url('assets/fuse_box.png');"></div>
+  <div id="cat" class="target hidden" style="left:150px;top:300px;width:120px;height:120px;background-image:url('assets/cat.png');"></div>
+  <div id="meter" class="target hidden" style="left:500px;top:200px;width:150px;height:150px;background-image:url('assets/meter_box.png');"></div>
+  <div id="pole" class="target hidden" style="left:400px;top:50px;width:120px;height:220px;background-image:url('assets/pole.png');"></div>
+</div>
+
+<!-- Button Panel -->
+<div id="buttonPanel">
+  <button class="btn" onclick="saveGame()">💾 Save <span class="object"></span></button>
+  <button class="btn" onclick="loadGame()">📂 Load <span class="object"></span></button>
+  <button class="btn" onclick="resetGame()">♻️ Reset <span class="object"></span></button>
+  <button class="btn" onclick="toggleSound()">🔊 Sound <span class="object"></span></button>
+  <button class="btn" onclick="alert('Credits: Developed by AHSAN HABIB\nFB: https://www.facebook.com/ahm.habib.39')">🏆 Credits <span class="object"></span></button>
 </div>
 
 <!-- Overlay -->
 <div id="overlay">
-  <div id="overlayContent">
+  <div id="overlayContent" style="background:linear-gradient(to bottom,#00131a,#001b22);padding:20px;border-radius:15px;text-align:center;border:2px solid #0ff;">
     <h2 id="overlayTitle">শুরু করুন</h2>
     <p id="overlayText">তুমি গুরুত্বপূর্ণ কাজ করছ, হঠাৎ electricity চলে গেল! START চাপুন।</p>
-    <button class="btn" onclick="startGame()">🎮 START</button>
+    <button class="btn" onclick="startGame()">🎮 START <span class="object"></span></button>
   </div>
 </div>
 
-<!-- Hint -->
 <div id="hint">মাউস/আঙুল নিয়ে খেলুন</div>
 
-<!-- Flashlight -->
-<div id="flash"></div>
-
-<!-- Particle canvas -->
-<canvas id="particles"></canvas>
-
-<!-- Typing simulation -->
-<div id="typingArea"></div>
-
-<!-- Targets -->
-<div id="fuse" class="target" style="left:50px;top:100px;width:100px;height:150px;background-image:url('assets/fuse_box.png');"></div>
-<div id="cat" class="target hidden" style="left:150px;top:300px;width:120px;height:120px;background-image:url('assets/cat.png');"></div>
-<div id="meter" class="target hidden" style="left:500px;top:200px;width:150px;height:150px;background-image:url('assets/meter_box.png');"></div>
-<div id="pole" class="target hidden" style="left:400px;top:50px;width:120px;height:220px;background-image:url('assets/pole.png');"></div>
-
 <script>
+// State
 let step=0,mood=6,timer=90,running=false,soundsOn=true;
 const flash=document.getElementById('flash');
 const particles=document.getElementById('particles');
 const ctx=particles.getContext('2d');
-let particleStore=[],hintTimer=null;
+let particleStore=[],confettiStore=[],hintTimer=null;
 
 // Typing
 const typingArea=document.getElementById('typingArea');
@@ -84,8 +84,7 @@ function typeLoop(){if(!running)return;typingArea.innerText=typingContent.slice(
 typeLoop();
 
 // Audio
-let ambient=new Audio('assets/ambient_loop.mp3');
-ambient.loop=true;
+let ambient=new Audio('assets/ambient_loop.mp3'); ambient.loop=true;
 
 // Start Game
 function startGame(){
@@ -102,13 +101,11 @@ function startGame(){
 // Mission begins
 function beginMission(){step=1;updateStage();showHint('লোডশেডিং হয়েছে — ফিউজ খুঁজুন!');document.getElementById('fuse').classList.remove('hidden');flickerEffect();}
 
-// Timer
+// Timer & Mood
 setInterval(()=>{if(running){timer--;document.getElementById('timer').innerText=timer;if(timer<=0)endGame(false,'সময় শেষ!');}},1000);
-
-// Mood
 setInterval(()=>{if(running){mood=Math.min(100,mood+2);document.getElementById('moodBar').style.width=mood+'%';if(mood>=90)endGame(false,'রাগ বেশি হয়ে গেল!');}},1500);
 
-// Flashlight movement
+// Flashlight
 document.addEventListener('mousemove',onMove);
 document.addEventListener('touchmove',onMove);
 function onMove(e){
@@ -127,7 +124,7 @@ document.getElementById('meter').onclick=function(e){if(step!==2)return;step=3;u
 document.getElementById('pole').onclick=function(e){if(step!==3)return;step=4;updateStage();setTimeout(win,2500);playClick();}
 
 // Win / End
-function win(){running=false;ambient.pause();typingArea.innerText='';showHint('বিদ্যুৎ ফিরে এসেছে — কাজ শেষ হয়েছে!');document.body.classList.remove('flicker');}
+function win(){running=false;ambient.pause();typingArea.innerText='';showHint('বিদ্যুৎ ফিরে এসেছে — কাজ শেষ হয়েছে!');launchConfetti();document.body.classList.add('zoom-effect');setTimeout(()=>{document.body.classList.remove('zoom-effect');},1500);}
 function endGame(success,message){running=false;ambient.pause();typingArea.innerText='';document.body.classList.remove('flicker');alert(message);document.getElementById('overlay').style.display='flex';document.getElementById('overlayTitle').innerText=success?'বিজয়!':'মিশন ব্যর্থ!';document.getElementById('overlayText').innerText=message;}
 
 // Sparks
@@ -158,6 +155,11 @@ function showPhonePrompt(){const num=prompt('অফিসে কল করুন
 
 // Flicker effect
 function flickerEffect(){document.body.classList.add('flicker');setTimeout(()=>{document.body.classList.remove('flicker');},10000);}
+
+// Confetti
+function launchConfetti(){for(let i=0;i<150;i++){let c=document.createElement('div');c.className='confetti';c.style.background=['#ff0','#0ff','#f0f','#f80'][Math.floor(Math.random()*4)];c.style.left=Math.random()*window.innerWidth+'px';c.style.top=Math.random()*window.innerHeight+'px';document.body.appendChild(c);let vx=(Math.random()-0.5)*8;let vy=Math.random()*-10-2;let life=100;confettiStore.push({el:c,vx,vy,life});}}
+function tickConfetti(){for(let i=confettiStore.length-1;i>=0;i--){const p=confettiStore[i];p.vy+=0.3;p.el.style.left=(parseFloat(p.el.style.left)+p.vx)+'px';p.el.style.top=(parseFloat(p.el.style.top)+p.vy)+'px';p.life--;p.el.style.opacity=p.life/100;if(p.life<=0){document.body.removeChild(p.el);confettiStore.splice(i,1);}}requestAnimationFrame(tickConfetti);}
+tickConfetti();
 </script>
 </body>
 </html>
