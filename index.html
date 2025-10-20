@@ -34,7 +34,6 @@
 </head>
 <body>
 <div class="container">
-  <!-- Sidebar -->
   <div class="sidebar">
     <button id="startBtn">🎮 START</button>
     <button id="saveBtn">💾 সেভ</button>
@@ -44,7 +43,6 @@
     <button id="creditsBtn">✨ Developed by AHSAN HABIB</button>
   </div>
 
-  <!-- Game Area -->
   <div class="game-area" id="gameArea">
     <div id="fuse" class="target"></div>
     <div id="cat" class="target"></div>
@@ -56,11 +54,10 @@
   </div>
 </div>
 
-<!-- Overlay -->
 <div class="overlay" id="overlay">
   <div class="overlay-box">
     <h2>শুরু করুন</h2>
-    <p>তুমি গুরুত্বপূর্ণ কাজ করছিলে, কিন্তু হঠাৎ করে electricity চলে গেছে! কাজ শেষ করতে START চাপুন।</p>
+    <p>তুমি গুরুত্বপূর্ণ কাজ করছিলে, কিন্তু হঠাৎ করে electricity চলে গেছে! কাজ শেষ করতে START চাপো।</p>
     <button id="overlayStart">🎮 START</button>
   </div>
 </div>
@@ -87,22 +84,17 @@ let found = { fuse:false, cat:false, meter:false, pole:false };
 let particleStore = [];
 let ambient = new Audio('assets/mission_loop.mp3'); ambient.loop=true;
 
-// resize canvas
 function resizeCanvas(){ particlesCanvas.width=gameArea.clientWidth; particlesCanvas.height=gameArea.clientHeight; }
 window.addEventListener('resize',resizeCanvas); resizeCanvas();
 
-// flashlight follow (mouse + touch)
 function updateFlash(x,y){
-  flash.style.background=`radial-gradient(circle 160px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at ${x}px ${y}px, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%)`;
+  flash.style.background = `radial-gradient(circle 160px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at ${x}px ${y}px, rgba(255,255,255,0.04), rgba(0,0,0,0) 60%)`;
 }
 gameArea.addEventListener('mousemove',(e)=>{ updateFlash(e.offsetX,e.offsetY); });
 gameArea.addEventListener('touchmove',(e)=>{ e.preventDefault(); const t=e.touches[0]; const rect=gameArea.getBoundingClientRect(); updateFlash(t.clientX-rect.left,t.clientY-rect.top); },{passive:false});
 
-// particles
 function spawnSparks(x,y,n=12){
-  for(let i=0;i<n;i++){
-    particleStore.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-1.8)*3,life:30+Math.random()*30,size:1+Math.random()*2,color:`rgba(255,${150+Math.floor(Math.random()*100)},0,1)`});
-  }
+  for(let i=0;i<n;i++){ particleStore.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-1.8)*3,life:30+Math.random()*30,size:1+Math.random()*2,color:`rgba(255,${150+Math.floor(Math.random()*100)},0,1)`}); }
 }
 function tickParticles(){
   ctx.clearRect(0,0,particlesCanvas.width,particlesCanvas.height);
@@ -117,18 +109,15 @@ function tickParticles(){
 }
 tickParticles();
 
-// hint
 function typeHint(t,ms=2500){ hint.textContent=t; setTimeout(()=>{ hint.textContent='মাউস/আঙুল দ্বারা ফ্ল্যাশলাইট নিয়ন্ত্রণ করুন'; },ms); }
 
-// button actions
 function startGame(){ overlay.style.display='none'; running=true; step=1; typeHint('লোডশেডিং হয়েছে — ফিউজ খুঁজুন!'); if(soundsOn) ambient.play().catch(()=>{}); fadeInTargets(); }
 function saveGame(){ localStorage.setItem('ls_save',JSON.stringify({step,mood,timer,found})); typeHint('সেভ করা হয়েছে'); }
-function loadGame(){ const raw=localStorage.getItem('ls_save'); if(!raw){typeHint('কোনো সেভ পাওয়া যায়নি'); return;} const s=JSON.parse(raw); step=s.step||0; mood=s.mood||0; timer=s.timer||90; found=s.found||found; typeHint('সেভ লোড হয়েছে'); fadeInTargets(); }
+function loadGame(){ const raw=localStorage.getItem('ls_save'); if(!raw){typeHint('কোনো সেভ পাওয়া যায়নি'); return;} const s=JSON.parse(raw); step=s.step||0; mood=s.mood||mood; timer=s.timer||timer; found=s.found||found; typeHint('লোড করা হয়েছে'); fadeInTargets(); }
 function resetGame(){ if(confirm('রিসেট করবেন?')){ localStorage.removeItem('ls_save'); window.location.reload(); } }
 function toggleSound(){ soundsOn=!soundsOn; soundBtn.textContent = soundsOn?'🔊 সাউন্ড ON':'🔇 সাউন্ড OFF'; if(soundsOn) ambient.play().catch(()=>{}); else ambient.pause(); }
 function openCredits(){ window.open('https://www.facebook.com/ahm.habib.39','_blank'); }
 
-// fade-in targets
 function fadeInTargets(){
   document.getElementById('cat').style.transition='opacity 0.8s';
   document.getElementById('meter').style.transition='opacity 0.8s';
@@ -146,7 +135,6 @@ resetBtn.addEventListener('click',resetGame);
 soundBtn.addEventListener('click',toggleSound);
 creditsBtn.addEventListener('click',openCredits);
 
-// target interactions
 function clickTarget(id,nextStep,hintText,sparks){
   const el=document.getElementById(id);
   el.addEventListener('click',(e)=>{
@@ -166,7 +154,7 @@ function clickTarget(id,nextStep,hintText,sparks){
 clickTarget('fuse',1.5,'ফিউজ পাওয়া গেছে — বিড়াল সরান',20);
 clickTarget('cat',2,'বিড়াল সরানো হয়েছে — মিটার চেক করুন',15);
 clickTarget('meter',3,'মিটার চেক সম্পন্ন — খুঁটি তে যান',15);
-clickTarget('pole',4,'ফাইনাল সম্পন্ন — বিদ্যুৎ ফিরে এসেছে!',20);
+clickTarget('pole',4,'ফাইনাল সম্পন্ন — বিদ্যুৎ ফ���রে এসেছে!',20);
 </script>
 </body>
 </html>
