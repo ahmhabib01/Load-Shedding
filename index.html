@@ -1,609 +1,246 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-<title>⚡ লোডশেডিং রিকভারি — Ultimate Mindblow ⚡</title>
-<style>
-/* -----------------------------
-   GLOBAL & FONTS
-   ----------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Noto+Sans+Bengali:wght@400;700&display=swap');
-
-:root{
-  --w:900px; --h:650px;
-  --accent:#00f0ff; --accent-2:#00b3ff; --bg-dark:#030307;
-  --glass: rgba(255,255,255,0.06);
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:'Noto Sans Bengali', sans-serif;background:radial-gradient(circle at 20% 10%, #071126 0%, #000 35%);color:#eafcff}
-.container{width:var(--w);height:var(--h);margin:28px auto;border-radius:12px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 80px rgba(0,180,255,0.06);background:linear-gradient(180deg,#02060a 0%, #071426 100%)}
-
-/* top neon bar */
-.topbar{height:62px;background:linear-gradient(90deg, rgba(0,255,255,0.06), rgba(0,170,255,0.04));display:flex;align-items:center;justify-content:space-between;padding:10px 18px;gap:12px}
-.title{display:flex;gap:12px;align-items:center}
-.title h1{font-family:'Orbitron',sans-serif;font-size:18px;color:var(--accent);text-shadow:0 0 10px rgba(0,240,255,0.12)}
-.title p{color:#bfefff;margin:0;font-size:13px}
-.controls{display:flex;gap:8px;align-items:center}
-.small-btn{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#002;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(0,180,255,0.12)}
-
-/* main stage */
-.stage{position:relative;height:calc(100% - 62px);display:flex}
-.left-panel{width:260px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-right:1px solid rgba(255,255,255,0.03)}
-.playarea{flex:1;position:relative;overflow:hidden;background:
- linear-gradient(180deg,#001 0%, #000 60%);display:flex;align-items:center;justify-content:center}
-
-/* HUD / INFO */
-.hud-block{background:var(--glass);padding:12px;border-radius:10px;margin-bottom:12px;backdrop-filter: blur(6px);border:1px solid rgba(0,255,255,0.04)}
-.hud-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.hud-item:last-child{margin-bottom:0}
-.label{font-size:13px;color:#cfefff}
-.value{font-weight:700;color:#e9ffff}
-
-/* mood bar */
-.mood-wrap{display:flex;align-items:center;gap:10px}
-.mood-bar{width:140px;height:14px;background:#06121a;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-.mood-progress{height:100%;width:0%;background:linear-gradient(90deg,#ff4e4e,#ff9a3d);transition:width .3s ease}
-
-/* mini-map placeholders */
-.map{height:120px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));display:flex;align-items:center;justify-content:center;color:#7fdcff;font-size:12px}
-
-/* playcanvas (center) */
-.canvas-wrap{width:100%;height:100%;position:relative;display:flex;align-items:stretch}
-.sky{position:absolute;inset:0;background:
-  linear-gradient(180deg, rgba(5,18,30,0.7), rgba(0,0,0,0.9));z-index:0}
-.road-layer{position:relative;z-index:2;width:100%;height:100%;pointer-events:none}
-.scene{position:absolute;inset:0;pointer-events:none}
-
-/* moving background items (parallax) */
-.bg-strip{position:absolute;inset:0;overflow:hidden}
-.bg-item{position:absolute;width:220px;height:60px;background-repeat:no-repeat;background-size:contain;opacity:0.9;transform:translateY(0);will-change:transform;}
-
-/* flashlight effect */
-.flashlight{position:absolute;inset:0;z-index:6;pointer-events:auto;cursor:none;background:radial-gradient(circle 140px at 50% 50%, rgba(255,255,230,0.85), rgba(0,0,0,0.0) 40%), radial-gradient(circle 260px at 50% 50%, rgba(255,255,255,0.04), rgba(0,0,0,0.9) 60%);mix-blend-mode:screen;transition:background 0.09s linear}
-
-/* interactive targets (fuse,meter,pole,cat) */
-.target{position:absolute;background-size:contain;background-repeat:no-repeat;background-position:center;opacity:0;transform:scale(.95);transition:opacity .25s ease,transform .12s ease,filter .15s}
-.target.lit{opacity:1;transform:scale(1.07);filter:drop-shadow(0 0 18px rgba(0,220,255,0.15));pointer-events:auto}
-
-/* cat animation */
-.cat-anim{animation:catMove 2s ease-in-out infinite}
-@keyframes catMove{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-
-/* final screen overlay */
-.overlay{position:absolute;inset:0;z-index:12;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9));display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:20px;opacity:0;pointer-events:none;transition:opacity .4s}
-.overlay.show{opacity:1;pointer-events:auto}
-.overlay h2{color:var(--accent);font-family:'Orbitron',sans-serif;letter-spacing:1px;margin:0}
-.overlay p{color:#dffaff;margin:0;max-width:800px;text-align:center}
-
-/* bottom hints */
-.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;background:rgba(0,0,0,0.45);padding:6px 12px;border-radius:18px;border:1px solid rgba(0,240,255,0.06);font-size:13px;color:#bff}
-
-/* sparkle particles (canvas) */
-canvas.particles{position:absolute;inset:0;z-index:5;pointer-events:none}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>লোডশেডিং রিকভারি - Ahsan Habib</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { margin:0; font-family: 'Orbitron', sans-serif; overflow: hidden; }
+    #flash { position:absolute; inset:0; z-index:30; pointer-events:auto; }
+    .lit { filter: brightness(1.6) drop-shadow(0 0 6px #fff); }
+    canvas { position:absolute; inset:0; pointer-events:none; z-index:20; }
+  </style>
 </head>
-<body>
-<div class="container" role="application" aria-label="Loadshedding Recovery Game">
+<body class="bg-black">
+  <div class="min-h-screen flex items-center justify-center">
+    <div class="w-[92vw] max-w-[1100px] bg-gradient-to-b from-[#02060a] to-[#071426] rounded-xl shadow-2xl overflow-hidden relative">
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="title">
-      <img src="assets/icon_power.png" alt="" style="width:38px;height:38px;border-radius:6px;filter:drop-shadow(0 4px 12px #00eaff)"/>
-      <div>
-        <h1>লোডশেডিং রিকভারি</h1>
-        <p>অসম্পূর্ণ প্রজেক্ট → শেষ ক্লিক বাঁচাতে লড়াই করুন</p>
-      </div>
-    </div>
-
-    <div class="controls">
-      <button class="small-btn" id="soundToggle">🎧 সাউন্ড: ON</button>
-      <button class="small-btn" id="saveBtn">💾 সেভ</button>
-      <button class="small-btn" id="resetBtn">♻️ রিসেট</button>
-    </div>
-  </div>
-
-  <!-- STAGE -->
-  <div class="stage">
-
-    <!-- LEFT PANEL: HUD -->
-    <aside class="left-panel">
-      <div class="hud-block">
-        <div class="hud-item"><div class="label">সময় অবশিষ্ট</div><div class="value" id="timerDisplay">00:15</div></div>
-        <div class="hud-item mood-wrap">
-          <div class="label">রাগ</div>
-          <div class="mood-bar"><div id="moodProgress" class="mood-progress"></div></div>
-        </div>
-      </div>
-
-      <div class="hud-block">
-        <div class="label">স্টেজ</div>
-        <div class="value" id="stageLabel">প্রি-প্যানিক</div>
-        <div style="height:8px"></div>
-        <div class="label">ইন্টারঅ্যাকশন</div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="small-btn" id="hintBtn" style="background:transparent;border:1px solid rgba(0,255,255,0.06);color:#9fefff">হিন্ট</button>
-          <button class="small-btn" id="mapBtn" style="background:transparent;border:1px solid rgba(0,255,255,0.06);color:#9fefff">মিনি-ম্যাপ</button>
-        </div>
-      </div>
-
-      <div class="hud-block map" id="miniMap">মিনি-ম্যাপ (টাচ/ক্লিক করুন)</div>
-
-      <div class="hud-block" style="margin-top:12px">
-        <div class="label">অর্জন</div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <div style="background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center;width:60px">🏆<div style="font-size:12px" id="ach1">—</div></div>
-          <div style="background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center;width:60px">🐱<div style="font-size:12px" id="ach2">—</div></div>
-          <div style="background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;text-align:center;width:60px">📞<div style="font-size:12px" id="ach3">—</div></div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- PLAY AREA -->
-    <main class="playarea">
-      <div class="canvas-wrap" id="canvasWrap">
-        <div class="sky"></div>
-
-        <!-- moving background items -->
-        <div class="bg-strip" id="bgStrip"></div>
-
-        <!-- road + items layer (visual only) -->
-        <div class="road-layer" id="roadLayer">
-          <!-- targets -->
-          <div id="fuse" class="target" style="left:80px;top:180px;width:120px;height:180px;background-image:url('assets/fuse_box.png')"></div>
-          <div id="meter" class="target hidden" style="left:630px;top:360px;width:150px;height:150px;background-image:url('assets/meter_box.png')"></div>
-          <div id="pole" class="target hidden" style="left:420px;top:100px;width:120px;height:220px;background-image:url('assets/pole.png')"></div>
-          <div id="cat" class="target hidden cat-anim" style="left:350px;top:260px;width:120px;height:120px;background-image:url('assets/cat.png')"></div>
-        </div>
-
-        <!-- particles -->
-        <canvas id="particles" class="particles"></canvas>
-
-        <!-- flashlight overlay (follows cursor/touch) -->
-        <div id="flashlight" class="flashlight" tabindex="0" aria-label="Flashlight area"></div>
-
-        <!-- overlay messages / final screen -->
-        <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
-          <h2 id="overlayTitle">শুরু করুন</h2>
-          <p id="overlayText">কমপ্লিট গাইড + দ্রুত অ্যাকশন দেখুন।</p>
-          <div style="display:flex;gap:10px">
-            <button class="small-btn" id="startBtn">🎮 শুরু করুন</button>
-            <button class="small-btn" id="tutorialBtn" style="background:transparent;border:1px solid rgba(0,255,255,0.06);color:#9fefff">টিউটোরিয়াল</button>
+      <!-- TOP BAR -->
+      <div class="flex items-center justify-between px-4 py-3 border-b border-cyan-900">
+        <div class="flex items-center gap-3">
+          <img src="/assets/icon_power.png" alt="logo" class="w-10 h-10 rounded-md drop-shadow-xl" />
+          <div>
+            <div class="text-cyan-300 font-bold text-lg font-orbitron">লোডশেডিং রিকভারি</div>
+            <div class="text-sm text-cyan-100">অসম্পূর্ণ প্রজেক্ট → শেষ ক্লিক বাঁচাবেন?</div>
           </div>
         </div>
-
-        <div class="hint" id="hintBubble">মাউস বা আঙুল ঘোরান — টর্চ অনুসরণ করবে</div>
+        <div class="flex items-center gap-2">
+          <button id="soundBtn" class="px-3 py-1 rounded-md bg-cyan-400 text-black font-bold">🎧 সাউন্ড: ON</button>
+          <button id="saveBtn" class="px-3 py-1 rounded-md bg-transparent border border-cyan-700 text-cyan-200">💾 সেভ</button>
+          <button id="resetBtn" class="px-3 py-1 rounded-md bg-transparent border border-cyan-700 text-cyan-200">♻️ রিসেট</button>
+          <a href="https://www.facebook.com/ahm.habib.39" target="_blank" class="px-3 py-1 rounded-md bg-cyan-500 text-black font-bold">Credits: AHSAN HABIB</a>
+        </div>
       </div>
-    </main>
 
+      <!-- MAIN STAGE -->
+      <div class="flex" style="height:72vh;">
+        <!-- LEFT HUD -->
+        <aside class="w-64 bg-[rgba(255,255,255,0.02)] p-4 border-r border-cyan-900 text-cyan-200">
+          <div class="mb-3">
+            <div class="text-sm">সময় অবশিষ্ট</div>
+            <div id="timer" class="text-2xl font-bold text-white">01:30</div>
+          </div>
+          <div class="mb-4">
+            <div class="text-sm">রাগ</div>
+            <div class="w-full h-3 bg-[#062022] rounded mt-2 overflow-hidden border border-cyan-900">
+              <div id="moodBar" class="h-full bg-gradient-to-r from-red-500 to-orange-400 w-[6%] transition-all"></div>
+            </div>
+          </div>
+          <div class="mb-4">
+            <div class="text-sm">স্টেজ</div>
+            <div id="stageText" class="text-white font-semibold mt-1">প্রি-প্যানিক</div>
+          </div>
+          <div class="mb-4 p-2 bg-[rgba(255,255,255,0.02)] rounded">
+            <div class="text-xs">ইন্টারঅ্যাকশন</div>
+            <div class="flex gap-2 mt-2">
+              <button id="hintBtn" class="px-2 py-1 bg-transparent border border-cyan-800 rounded text-cyan-200 text-sm">হিন্ট</button>
+              <button id="mapBtn" class="px-2 py-1 bg-transparent border border-cyan-800 rounded text-cyan-200 text-sm">মিনি-ম্যাপ</button>
+            </div>
+          </div>
+          <div class="text-xs">অর্জন</div>
+          <div class="flex gap-2 mt-2">
+            <div id="achFuse" class="w-12 h-12 bg-[rgba(255,255,255,0.02)] rounded flex items-center justify-center">—</div>
+            <div id="achCat" class="w-12 h-12 bg-[rgba(255,255,255,0.02)] rounded flex items-center justify-center">—</div>
+            <div id="achMeter" class="w-12 h-12 bg-[rgba(255,255,255,0.02)] rounded flex items-center justify-center">—</div>
+          </div>
+        </aside>
+
+        <!-- PLAY AREA -->
+        <main class="flex-1 relative overflow-hidden" id="playArea">
+          <!-- Parallax Background -->
+          <div id="bgRoad" class="absolute inset-0 -z-10 bg-[url('/assets/road_strip.png')] bg-repeat-x bg-contain opacity-70"></div>
+
+          <!-- Targets -->
+          <div id="fuse" class="absolute left-[6%] top-[24%] w-[120px] h-[180px] bg-no-repeat bg-center z-10" style="background-image:url('/assets/fuse_box.png')"></div>
+          <div id="cat" class="absolute left-[40%] top-[38%] w-[120px] h-[120px] bg-no-repeat bg-center z-10 hidden" style="background-image:url('/assets/cat.png')"></div>
+          <div id="meter" class="absolute left-[68%] top-[56%] w-[150px] h-[150px] bg-no-repeat bg-center z-10 hidden" style="background-image:url('/assets/meter_box.png')"></div>
+          <div id="pole" class="absolute left-[46%] top-[8%] w-[120px] h-[220px] bg-no-repeat bg-center z-10 hidden" style="background-image:url('/assets/pole.png')"></div>
+
+          <!-- Particles -->
+          <canvas id="particles"></canvas>
+
+          <!-- Flashlight -->
+          <div id="flash"></div>
+
+          <!-- Floating Hint -->
+          <div id="hintText" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full border border-cyan-800 text-sm text-cyan-100 z-40">
+            মাউস/আঙুল নিয়ে খেলুন
+          </div>
+        </main>
+      </div>
+
+      <!-- Overlay -->
+      <div id="overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+        <div class="bg-gradient-to-b from-[#00131a] to-[#001b22] p-6 rounded-xl text-center border border-cyan-900 max-w-xl">
+          <h2 id="overlayTitle" class="text-2xl font-orbitron text-cyan-300 mb-2">শুরু করুন</h2>
+          <p id="overlayText" class="text-cyan-100 mb-4 whitespace-pre-wrap">খেলাটি শুরু করতে START চাপুন</p>
+          <div class="flex gap-3 justify-center">
+            <button id="startBtn" class="px-4 py-2 bg-cyan-400 text-black rounded font-bold">🎮 START</button>
+            <button id="tutorialBtn" class="px-4 py-2 border border-cyan-800 text-cyan-200 rounded">📖 টিউটোরিয়াল</button>
+            <button id="loadBtn" class="px-4 py-2 border border-cyan-800 text-cyan-200 rounded">💾 সেভ লোড</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-</div>
+  <!-- SCRIPT -->
+  <script>
+  // ----------------- STATE -----------------
+  let step=0, mood=6, timer=90, running=false;
+  const found={fuse:false, cat:false, meter:false, pole:false};
+  let soundsOn=true;
 
-<!-- AUDIO (placeholders - replace in assets/) -->
-<audio id="sndAmb" src="assets/ambient_loop.mp3" loop preload="auto"></audio>
-<audio id="sndPowerOn" src="assets/power_on.mp3" preload="auto"></audio>
-<audio id="sndError" src="assets/error_buzz.mp3" preload="auto"></audio>
-<audio id="sndClick" src="assets/click.mp3" preload="auto"></audio>
-<audio id="sndSpark" src="assets/spark.mp3" preload="auto"></audio>
+  const flash=document.getElementById('flash');
+  const particles=document.getElementById('particles');
+  const ctx=particles.getContext('2d');
+  const particleStore=[];
+  let raf;
 
-<script>
-/* ===================================================
-   Ultra-Advanced Game Logic
-   - All interactions in one file
-   - Touch + Mouse friendly
-   - Saves to localStorage
-   - Particle spark system
-   =================================================== */
+  const ambient=new Audio('/assets/ambient_loop.mp3'); ambient.loop=true;
+  const clickSound=new Audio('/assets/click.mp3');
+  const sparkSound=new Audio('/assets/spark.mp3');
+  const errorSound=new Audio('/assets/error_buzz.mp3');
 
-(() => {
-  // ---- state ----
-  const state = {
-    currentStep: 0, // 0 pre,1 hunting fuse,1.5 cat,2 meter,3 pole,4 final
-    mood: 0,
-    timer: 90, // seconds left for emergency save (you can tweak)
-    running: false,
-    assets: {soundsOn:true},
-    found: {fuse:false,cat:false,meter:false,pole:false},
-    achievements:{}
-  };
+  // ----------------- UTILS -----------------
+  function formatTime(sec){ const m=Math.floor(sec/60).toString().padStart(2,'0'); const s=(sec%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+  function showHint(t,ms=2500){ document.getElementById('hintText').innerText=t; if(window.hintTimer) clearTimeout(window.hintTimer); window.hintTimer=setTimeout(()=>{document.getElementById('hintText').innerText=''},ms); }
+  function spawnSparks(x,y,n=12){ for(let i=0;i<n;i++){ particleStore.push({x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-1.8)*3,life:30+Math.random()*30,size:1+Math.random()*2,color:`rgba(255,${150+Math.floor(Math.random()*100)},0,1)`}); if(soundsOn) sparkSound.play().catch(()=>{}); } }
 
-  // ---- dom refs ----
-  const refs = {
-    overlay: document.getElementById('overlay'),
-    overlayTitle: document.getElementById('overlayTitle'),
-    overlayText: document.getElementById('overlayText'),
-    startBtn: document.getElementById('startBtn'),
-    tutorialBtn: document.getElementById('tutorialBtn'),
-    flash: document.getElementById('flashlight'),
-    particles: document.getElementById('particles'),
-    bgStrip: document.getElementById('bgStrip'),
-    fuse: document.getElementById('fuse'),
-    meter: document.getElementById('meter'),
-    pole: document.getElementById('pole'),
-    cat: document.getElementById('cat'),
-    sndAmb: document.getElementById('sndAmb'),
-    sndPowerOn: document.getElementById('sndPowerOn'),
-    sndError: document.getElementById('sndError'),
-    sndClick: document.getElementById('sndClick'),
-    sndSpark: document.getElementById('sndSpark'),
-    moodBar: document.getElementById('moodProgress'),
-    timerDisplay: document.getElementById('timerDisplay'),
-    stageLabel: document.getElementById('stageLabel'),
-    hintBubble: document.getElementById('hintBubble'),
-    soundToggle: document.getElementById('soundToggle'),
-    saveBtn: document.getElementById('saveBtn'),
-    resetBtn: document.getElementById('resetBtn'),
-    miniMap: document.getElementById('miniMap'),
-    hintBtn: document.getElementById('hintBtn'),
-    mapBtn: document.getElementById('mapBtn'),
-    ach1: document.getElementById('ach1'),
-    ach2: document.getElementById('ach2'),
-    ach3: document.getElementById('ach3'),
-    snds: []
-  };
+  function center(el){ const r=el.getBoundingClientRect(); const p=flash.getBoundingClientRect(); return {x:r.left-p.left+r.width/2, y:r.top-p.top+r.height/2}; }
+  function isNear(x,y,el,thresh=120){ const c=center(el); return Math.hypot(x-c.x,y-c.y)<thresh; }
 
-  refs.snds = [refs.sndAmb, refs.sndPowerOn, refs.sndError, refs.sndClick, refs.sndSpark];
-
-  // ---- helpers: audio safe play ----
-  function playSound(audio){
-    if(!state.assets.soundsOn) return;
-    try{ audio.currentTime = 0; audio.play().catch(()=>{}); }catch(e){}
-  }
-
-  // ---- persistent save/load ----
-  function saveState(){
-    const save = {
-      mood: state.mood, timer: state.timer, currentStep: state.currentStep, found: state.found, achievements: state.achievements
-    };
-    localStorage.setItem('ls_recovery_save', JSON.stringify(save));
-    toast('গেম সেভ করা হয়েছে');
-  }
-  function loadState(){
-    const raw = localStorage.getItem('ls_recovery_save');
-    if(!raw) return;
-    try{
-      const s = JSON.parse(raw);
-      state.mood = s.mood||0; state.timer = s.timer||state.timer; state.currentStep = s.currentStep||0;
-      state.found = s.found||state.found; state.achievements = s.achievements||{};
-      updateHUD();
-      toast('সেভ লোড হয়েছে');
-    }catch(e){console.warn('load failed',e)}
-  }
-  function resetState(){
-    if(confirm('রিসেট করলে সকল প্রগতি মুছে যাবে। চালিয়ে যেতে চান?')) {
-      localStorage.removeItem('ls_recovery_save');
-      location.reload();
-    }
-  }
-
-  // ---- HUD updates ----
   function updateHUD(){
-    refs.moodBar.style.width = Math.min(100, state.mood) + '%';
-    refs.timerDisplay.textContent = formatTime(state.timer);
-    refs.stageLabel.textContent = stepLabel(state.currentStep);
-    refs.ach1.textContent = state.achievements.power?'✓':'—';
-    refs.ach2.textContent = state.achievements.cat?'✓':'—';
-    refs.ach3.textContent = state.achievements.call?'✓':'—';
-  }
-  function stepLabel(st){ switch(st){
-    case 0: return 'প্রি-প্যানিক';
-    case 1: return 'ফিউজ খোঁজা';
-    case 1.5: return 'বিড়াল সরান';
-    case 2: return 'মিটার চেক';
-    case 3: return 'খুঁটি চেক';
-    case 4: return 'ফাইনাল';
-    default: return 'অজান';
-  }}
-
-  // ---- timer loop ----
-  let mainTimer = null;
-  function startTimer(){
-    if(mainTimer) return;
-    mainTimer = setInterval(()=>{
-      if(!state.running) return;
-      state.timer--;
-      if(state.timer <= 0){ clearInterval(mainTimer); mainTimer=null; failGame('সময় শেষ! প্রজেক্ট সেভ হয়নি'); return; }
-      if(state.timer % 1 === 0) updateHUD();
-    }, 1000);
+    document.getElementById('timer').innerText=formatTime(timer);
+    document.getElementById('moodBar').style.width=mood+'%';
+    const stages=['প্রি-প্যানিক','ফিউজ খোঁজা','বিড়াল সরান','মিটার চেক','খুঁটি চেক','ফাইনাল'];
+    document.getElementById('stageText').innerText=stages[Math.floor(step)]||'অজানা';
+    document.getElementById('achFuse').innerText=found.fuse?'🏆':'—';
+    document.getElementById('achCat').innerText=found.cat?'🐱':'—';
+    document.getElementById('achMeter').innerText=found.meter?'📞':'—';
   }
 
-  // ---- particles system (canvas) ----
-  const canvas = refs.particles; const ctx = canvas.getContext('2d');
-  let parts = [];
-  function resizeCanvas(){ canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  function spawnSparks(x,y,count=10){
-    for(let i=0;i<count;i++){
-      parts.push({
-        x,y,
-        vx:(Math.random()-0.5)*3,
-        vy:(Math.random()-1.8)*3,
-        life: 40 + Math.random()*30,
-        size: 1+Math.random()*2,
-        color: `rgba(255,${150+Math.floor(Math.random()*100)},0,1)`
-      });
-    }
+  function endGame(success,msg){
+    running=false;
+    ambient.pause();
+    document.getElementById('overlayTitle').innerText=success?'বিজয়!':'মিশন ব্যর্থ!';
+    document.getElementById('overlayText').innerText=msg;
+    document.getElementById('overlay').style.display='flex';
   }
+
+  // ----------------- GAME LOOP -----------------
   function tickParticles(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(let i=parts.length-1;i>=0;i--){
-      const p = parts[i];
-      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life--;
-      ctx.beginPath(); ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life/80);
+    ctx.clearRect(0,0,particles.width,particles.height);
+    for(let i=particleStore.length-1;i>=0;i--){
+      const p=particleStore[i];
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.life--;
+      ctx.beginPath(); ctx.globalAlpha=Math.max(0,p.life/60); ctx.fillStyle=p.color;
       ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
-      if(p.life<=0) parts.splice(i,1);
+      if(p.life<=0) particleStore.splice(i,1);
     }
-    requestAnimationFrame(tickParticles);
+    raf=requestAnimationFrame(tickParticles);
   }
-  tickParticles();
+  function resizeCanvas(){ particles.width=particles.clientWidth; particles.height=particles.clientHeight; }
+  window.addEventListener('resize',resizeCanvas); resizeCanvas(); tickParticles();
 
-  // ---- background parallax items (road motion, up/down) ----
-  const bgStrip = refs.bgStrip;
-  function makeBgItems(){
-    bgStrip.innerHTML = '';
-    const items = [
-      {img:'assets/bike.png', top:420, speed:1.2},
-      {img:'assets/truck.png', top:430, speed:0.9},
-      {img:'assets/board1.png', top:160, speed:0.4},
-      {img:'assets/leafpile.png', top:480, speed:1.6},
-      {img:'assets/pedestrian.png', top:390, speed:1.0},
-    ];
-    items.forEach((it,idx)=>{
-      const el = document.createElement('div'); el.className='bg-item';
-      el.style.top = it.top+'px'; el.style.left = (-200 - idx*300) + 'px';
-      el.style.backgroundImage = `url('${it.img}')`; el.dataset.speed = it.speed;
-      bgStrip.appendChild(el);
-    });
-  }
-  makeBgItems();
-  function animateBg(){
-    const els = [...bgStrip.children];
-    els.forEach(el=>{
-      const speed = parseFloat(el.dataset.speed||1);
-      let left = parseFloat(el.style.left || 0);
-      left += speed * 1.8;
-      if(left > window.innerWidth+200) left = -400 - Math.random()*400;
-      el.style.left = left + 'px';
-    });
-    requestAnimationFrame(animateBg);
-  }
-  animateBg();
+  // ----------------- EVENTS -----------------
+  document.getElementById('playArea').addEventListener('mousemove',onMove);
+  document.getElementById('playArea').addEventListener('touchmove',onMove);
 
-  // ---- flash effect follow pointer/touch ----
-  const flash = refs.flash;
-  let fx = 450, fy = 320;
-  function setFlash(x,y,size=140){
-    fx = x; fy = y;
-    flash.style.background = `radial-gradient(circle ${size}px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0.0) 38%), radial-gradient(circle ${size*2.0}px at ${x}px ${y}px, rgba(255,255,255,0.03), rgba(0,0,0,0.9) 62%)`;
-  }
-
-  // pointer events
-  function onPointerMove(e){
-    const rect = flash.getBoundingClientRect();
-    const x = (e.touches? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches? e.touches[0].clientY : e.clientY) - rect.top;
-    setFlash(x,y,140);
+  function onMove(e){
+    const rect=flash.getBoundingClientRect();
+    const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    const y=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+    flash.style.background=`radial-gradient(circle 160px at ${x}px ${y}px, rgba(255,255,230,0.95), rgba(0,0,0,0) 40%), radial-gradient(circle 360px at ${x}px ${y}px, rgba(255,255,255,0.04), rgba(0,0,0,0.92) 60%)`;
     checkProximity(x,y);
-  }
-  flash.addEventListener('mousemove', onPointerMove);
-  flash.addEventListener('touchmove', onPointerMove,{passive:true});
-
-  // hide cursor but show custom
-  document.addEventListener('mousemove', ()=> flash.style.display='block');
-
-  // ---- proximity detection ----
-  function elementCenter(el){
-    const r = el.getBoundingClientRect(), parent = flash.getBoundingClientRect();
-    return {x: r.left - parent.left + r.width/2, y: r.top - parent.top + r.height/2};
-  }
-  function isNear(px,py,el,threshold=120){
-    const c = elementCenter(el);
-    const d = Math.hypot(px-c.x, py-c.y);
-    return d < threshold;
   }
 
   function checkProximity(x,y){
-    // highlight targets based on step
-    [refs.fuse, refs.meter, refs.pole, refs.cat].forEach(t=>t.classList.remove('lit'));
-    if(state.currentStep === 1 && isNear(x,y,refs.fuse)){ refs.fuse.classList.add('lit'); refs.hintBubble=''; refs.hintBubble=''; refs.hintBubble}
-    if(state.currentStep === 1.5 && isNear(x,y,refs.cat)){ refs.cat.classList.add('lit'); refs.hintBubble}
-    if(state.currentStep === 2 && isNear(x,y,refs.meter)){ refs.meter.classList.add('lit') }
-    if(state.currentStep === 3 && isNear(x,y,refs.pole)){ refs.pole.classList.add('lit') }
-    // show messages
-    if(refs.fuse.classList.contains('lit')) showMessage('ফিউজ বক্স মিলেছে — ক্লিক করুন!');
-    else if(refs.cat.classList.contains('lit')) showMessage('বিড়াল দেখছেন — তাকে সরান (ক্লিক)!');
-    else if(refs.meter.classList.contains('lit')) showMessage('মিটার পাওয়া গেছে — ক্লিক করুন!');
-    else if(refs.pole.classList.contains('lit')) showMessage('ইলেকট্রিক খুঁটি — কল করুন!');
-    else showMessage('অন্ধকারে ফ্ল্যাশলাইট নিয়ে ঘুরুন — গুরুত্বপূর্ণ জিনিস খুঁজুন');
+    const fuse=document.getElementById('fuse');
+    const cat=document.getElementById('cat');
+    const meter=document.getElementById('meter');
+    const pole=document.getElementById('pole');
+    [fuse,cat,meter,pole].forEach(it=>it&&it.classList.remove('lit'));
+    if(step===1&&fuse&&isNear(x,y,fuse)){ fuse.classList.add('lit'); showHint('ফিউজ বক্স - ক্লিক করুন'); }
+    else if(step===1.5&&cat&&isNear(x,y,cat)){ cat.classList.add('lit'); showHint('বিড়াল- ক্লিক করে সরান'); }
+    else if(step===2&&meter&&isNear(x,y,meter)){ meter.classList.add('lit'); showHint('মিটার - ক্লিক করুন'); }
+    else if(step===3&&pole&&isNear(x,y,pole)){ pole.classList.add('lit'); showHint('খুঁটি - ক্লিক করুন'); }
+    else showHint('ফ্ল্যাশলাইট ঘোরান এবং গুরুত্বপূর্ণ জিনিস খুঁজুন');
   }
 
-  // ---- interactions ----
-  refs.fuse.addEventListener('click', ()=> {
-    if(state.currentStep !== 1) return;
-    playSound(refs.sndClick);
-    state.found.fuse = true;
-    state.currentStep = 1.5;
-    refs.cat.classList.remove('hidden'); // show cat
-    refs.cat.classList.add('lit');
-    state.mood += 8; updateHUD();
-    showMessage('ফিউজ বক্সে বিড়াল ঘুমাচ্ছে! তাকে সরান — ক্লিক করুন (বিড়াল)');
-    spawnSparks(fx,fy,20); playSound(refs.sndSpark);
-    refs.ach2.textContent = '—';
-  });
+  // ----------------- START / BUTTONS -----------------
+  document.getElementById('startBtn').onclick=start;
+  document.getElementById('tutorialBtn').onclick=()=>alert('Move mouse / touch to control flashlight.\nFind fuse → click.\nMove cat → click.\nCheck meter → call office → get fuse from pole.');
+  document.getElementById('soundBtn').onclick=()=>{
+    soundsOn=!soundsOn;
+    if(soundsOn){ ambient.play().catch(()=>{}); document.getElementById('soundBtn').innerText='🎧 সাউন্ড: ON'; }
+    else{ ambient.pause(); document.getElementById('soundBtn').innerText='🔇 সাউন্ড: OFF'; }
+  };
+  document.getElementById('hintBtn').onclick=()=>showHint('তাড়াতাড়ি! ফিউজ খুঁজুন');
+  document.getElementById('mapBtn').onclick=()=>alert('মিনি-ম্যাপ:\nফিউজ: বাম\nমিটার: ডান\nখুঁটি: সামনের দিকে');
+  document.getElementById('saveBtn').onclick=()=>localStorage.setItem('ls_save',JSON.stringify({step,mood,timer,running,found})),showHint('সেভ করা হয়েছে');
+  document.getElementById('resetBtn').onclick=()=>{ if(confirm('রিসেট করবেন?')){ localStorage.removeItem('ls_save'); location.reload(); } };
+  document.getElementById('loadBtn').onclick=()=>{
+    const raw=localStorage.getItem('ls_save'); if(!raw)return showHint('কোনো সেভ ফাইল পাওয়া যায় নি');
+    try{ const s=JSON.parse(raw); step=s.step||0; mood=s.mood||6; timer=s.timer||90; running=s.running||false; Object.assign(found,s.found||found); updateHUD(); showHint('সেভ লোড হয়েছে'); }catch(e){showHint('সেভ লোডে সমস্যা');}
+  };
 
-  refs.cat.addEventListener('click', ()=> {
-    if(state.currentStep !== 1.5) return;
-    playSound(refs.sndClick);
-    state.found.cat = true; state.achievements.cat = true;
-    refs.cat.classList.add('hidden'); refs.cat.classList.remove('lit');
-    refs.meter.classList.remove('hidden'); refs.meter.classList.add('lit');
-    state.currentStep = 2; state.mood = Math.max(0, state.mood-10); updateHUD();
-    showMessage('বিড়াল সরানো হলো! মিটার চেক করুন!');
-    spawnSparks(fx,fy,12);
-    updateHUD();
-  });
-
-  refs.meter.addEventListener('click', ()=> {
-    if(state.currentStep !== 2) return;
-    playSound(refs.sndClick);
-    state.found.meter = true; state.currentStep = 3;
-    refs.pole.classList.remove('hidden'); refs.pole.classList.add('lit');
-    showPhoneDialMiniGame();
-  });
-
-  refs.pole.addEventListener('click', ()=> {
-    if(state.currentStep !== 3) return;
-    playSound(refs.sndClick);
-    refs.pole.classList.remove('lit');
-    state.found.pole = true;
-    showMessage('খুঁটিতে ফিউজ পাওয়া গেছে! মাঠে যান ও ফিউজ আনুন। (আগামী 3 সেকেন্ডে খুঁজে নিন!)');
-    setTimeout(()=> {
-      // final hunt success
-      state.currentStep = 4;
-      state.achievements.power = true;
-      state.mood = Math.max(0,state.mood-30);
-      updateHUD();
-      setTimeout(()=> winGame(),2000);
-    }, 3000);
-  });
-
-  // ---- phone mini-game: simple dial UI ----
-  function showPhoneDialMiniGame(){
-    // present prompt with simple number input using prompt() for simplicity
-    showMessage('অফিসে কল করুন — নম্বর টাইপ করুন (প্রচলিত নম্বর: 555)');
-    setTimeout(()=>{
-      const num = prompt('অফিস নম্বর ডায়াল করুন (৩ সংখ্যার নম্বর)', '');
-      if(num === '555'){ playSound(refs.sndClick); showMessage('কল হয়েছে! অফিস বলছে: ফিউজ মাঠে পড়ে আছে।'); state.achievements.call = true; state.currentStep = 3; updateHUD(); }
-      else { state.mood += 12; updateHUD(); playSound(refs.sndError); showMessage('ভুল নম্বর! মেজাজ বাড়লো — আবার চেষ্টা করুন'); }
-    },200);
-  }
-
-  // ---- fail / win ----
-  function failGame(msg){
-    state.running = false;
-    playSound(refs.sndError);
-    refs.overlay.classList.add('show');
-    refs.overlayTitle.textContent = 'মিশন ব্যর্থ!';
-    refs.overlayText.textContent = msg;
-    refs.overlay.setAttribute('aria-hidden','false');
-    updateHUD();
-  }
-  function winGame(){
-    state.running = false;
-    playSound(refs.sndPowerOn);
-    refs.overlay.classList.add('show');
-    refs.overlayTitle.textContent = 'বিজয়! বিদ্যুৎ ফিরে এসেছে ⚡';
-    refs.overlayText.textContent = 'আপনার ৫ ঘণ্টার কাজ সেভ হয়েছে — কিন্তু ল্যাপটপ ব্যাটারি কম! (আরও অ্যাচিভমেন্ট আনলক করুন)';
-    refs.overlay.setAttribute('aria-hidden','false');
-    state.achievements.power = true;
-    updateHUD();
-  }
-
-  // ---- UI messages (temporary) ----
-  let msgTimer = null;
-  function showMessage(txt, duration=2800){
-    refs.hintBubble.textContent = txt;
-    refs.hintBubble.style.opacity = '1';
-    if(msgTimer) clearTimeout(msgTimer);
-    msgTimer = setTimeout(()=>{ refs.hintBubble.style.opacity = '0.95'; }, duration);
-  }
-
-  // ---- misc: toast ----
-  function toast(t){
-    const el = document.createElement('div');
-    el.textContent = t; el.style.position='fixed'; el.style.left='20px'; el.style.bottom='20px';
-    el.style.padding='8px 12px'; el.style.background='rgba(0,0,0,0.6)'; el.style.color='#bff'; el.style.border='1px solid rgba(0,255,255,0.06)';
-    el.style.borderRadius='8px'; document.body.appendChild(el);
-    setTimeout(()=>el.remove(),2200);
-  }
-
-  // ---- start / overlay handlers ----
-  refs.startBtn.addEventListener('click', startGame);
-  refs.tutorialBtn.addEventListener('click', ()=> {
-    refs.overlayTitle.textContent = 'টিউটোরিয়াল';
-    refs.overlayText.textContent = 'কীভাবে খেলব: মাউস/আঙুল ঘোরান, টর্চ অনুসরণ করবে। ফিউজ খুঁজে ক্লিক করুন, বিড়াল সরান, মিটার চেক করুন, অফিসে কল করুন, মাঠে গিয়ে ফিউজ আর আনুন!';
-  });
-
-  // sound toggle
-  refs.soundToggle.addEventListener('click', ()=> {
-    state.assets.soundsOn = !state.assets.soundsOn;
-    refs.soundToggle.textContent = '🎧 সাউন্ড: ' + (state.assets.soundsOn? 'ON':'OFF');
-    if(state.assets.soundsOn) playSound(refs.sndAmb); else refs.sndAmb.pause();
-  });
-
-  // save/reset
-  refs.saveBtn.addEventListener('click', saveState);
-  refs.resetBtn.addEventListener('click', resetState);
-
-  refs.hintBtn.addEventListener('click', ()=> showMessage('তাড়াতাড়ি! ফিউজ খুঁজুন → ক্লিক করুন',3000));
-  refs.mapBtn.addEventListener('click', ()=> { alert('মিনি-ম্যাপ: ফিউজ বাম দিকে, মিটার ডান দিকে, খুঁটি সামনের দিকে'); });
-
-  // start game flow
-  function startGame(){
-    refs.overlay.classList.remove('show');
-    refs.overlay.setAttribute('aria-hidden','true');
-    state.running = true; state.currentStep = 0; // pre
-    playSound(refs.sndAmb);
-    refs.sndAmb.loop = true;
-    // pre-panic countdown
-    let pre = 5;
-    refs.stageLabel.textContent = 'প্রি-প্যানিক';
-    showMessage('শেষ ক্লিক হাঁ দিকে — লোডশেডিং শুরু হতে আর '+pre+' সেকেন্ড',1200);
-    const pInt = setInterval(()=> {
-      pre--; showMessage('লোডশেডিং শুরু হতে আর '+pre+' সেকেন্ড',800);
-      if(pre <= 0){
-        clearInterval(pInt);
-        // start mission
-        state.currentStep = 1; refs.stageLabel.textContent = 'ফিউজ খোঁজা';
-        showMessage('লোডশেডিং হয়েছে! ফিউজ খুঁজে দ্রুত ক্লিক করুন!');
-        // mood increases slowly
-        setInterval(()=> { if(state.running) { state.mood = Math.min(100, state.mood + 2); updateHUD(); if(state.mood>=90) failGame('আপনার রাগ এত বেড়ে গেলো যে ল্যাপটপ ক্র্যাশ করল'); } }, 1500);
-        startTimer(); // start mission timer
-      }
+  // ----------------- GAME FUNCTIONS -----------------
+  function start(){
+    document.getElementById('overlay').style.display='none';
+    running=true; step=0; mood=6; timer=90;
+    if(soundsOn) ambient.play().catch(()=>{});
+    let pre=4; showHint(`লোডশেডিং শুরু হতে আর ${pre} সেকেন্ড`);
+    const preInterval=setInterval(()=>{
+      pre-=1;
+      if(pre>0) showHint(`লোডশেডিং শুরু হতে আর ${pre} সেকেন্ড`);
+      else{ clearInterval(preInterval); beginMission(); }
     },1000);
   }
+  function beginMission(){ step=1; document.getElementById('cat').classList.add('hidden'); document.getElementById('meter').classList.add('hidden'); document.getElementById('pole').classList.add('hidden'); updateHUD(); showHint('লোডশেডিং হয়েছে — ফিউজ খুঁজুন!'); }
+  function win(){ endGame(true,'বিদ্যুৎ ফিরে এসেছে — কাজ সেভ হয়েছে (কিন্তু ব্যাটারি কম)'); }
 
-  // check proximity in an interval (for keyboard-less detection too)
-  setInterval(()=> {
-    // nothing heavy
-    updateHUD();
-  }, 700);
+  // CLICK HANDLERS
+  document.getElementById('fuse').onclick=e=>{ if(step!==1) return; step=1.5; found.fuse=true; document.getElementById('cat').classList.remove('hidden'); spawnSparks(e.offsetX,e.offsetY,20); updateHUD(); };
+  document.getElementById('cat').onclick=e=>{ if(step!==1.5) return; step=2; found.cat=true; document.getElementById('cat').classList.add('hidden'); document.getElementById('meter').classList.remove('hidden'); spawnSparks(e.offsetX,e.offsetY,14); updateHUD(); };
+  document.getElementById('meter').onclick=e=>{ if(step!==2) return; step=3; found.meter=true; document.getElementById('pole').classList.remove('hidden'); const num=prompt('অফিসে কল করুন — নম্বর ৩ সংখ্যায় লিখুন (টিপ: 555)',''); if(num==='555'){ mood=Math.max(0,mood-8); showHint('কল হয়েছে — মাঠে গিয়ে ফিউজ আনুন'); }else{ mood+=12; if(soundsOn) errorSound.play().catch(()=>{}); showHint('ভুল নম্বর — মেজাজ বাড়ল'); } updateHUD(); };
+  document.getElementById('pole').onclick=e=>{ if(step!==3) return; step=4; found.pole=true; setTimeout(()=>win(),1500); updateHUD(); };
 
-  // vibrations on mobile for important events
-  function vibrateShort(){ if(navigator.vibrate) navigator.vibrate(60); }
+  // ----------------- TIMER & MOOD -----------------
+  setInterval(()=>{
+    if(running){ timer--; if(timer<=0){ endGame(false,'সময় শেষ — প্রজেক্ট সেভ হয়নি'); } updateHUD(); }
+  },1000);
+  setInterval(()=>{ if(running){ mood=Math.min(100,mood+2); if(mood>=90) endGame(false,'রাগ এত বেড়ে গেল ল্যাপটপ ক্র্যাশ করলো!'); updateHUD(); } },1500);
 
-  // keyboard shortcuts (for fun)
-  window.addEventListener('keydown', (e)=> {
-    if(e.key === 's') saveState();
-    if(e.key === 'r') resetState();
-    if(e.key === 'm') { state.assets.soundsOn = !state.assets.soundsOn; refs.soundToggle.textContent = '🎧 সাউন্ড: ' + (state.assets.soundsOn? 'ON':'OFF'); }
+  // ----------------- KEY SHORTCUTS -----------------
+  window.addEventListener('keydown',e=>{
+    if(e.key==='s') document.getElementById('saveBtn').click();
+    if(e.key==='r'){ if(confirm('রিসেট করবেন?')){ localStorage.removeItem('ls_save'); location.reload(); } }
+    if(e.key==='m') document.getElementById('soundBtn').click();
   });
-
-  // load saved if exists
-  loadState();
-  updateHUD();
-
-  // accessibility: enable focus for flashlight to get pointer events on keyboard
-  refs.flash.setAttribute('tabindex','0');
-
-  // little ambient spawn to show "power surge" particles around fuse on mouseover
-  refs.fuse.addEventListener('mouseenter', ()=> { spawnSparks( elementCenterGlobal(refs.fuse).x, elementCenterGlobal(refs.fuse).y, 25); playSound(refs.sndSpark); vibrateShort(); });
-  function elementCenterGlobal(el){
-    const r = el.getBoundingClientRect();
-    return {x: r.left + r.width/2, y: r.top + r.height/2};
-  }
-
-  // small init
-  updateHUD();
-  showMessage('টিপ: "s" → সেভ, "r" → রিসেট',3500);
-
-  // expose some functions for debugging/extension
-  window.__LOADSHED = { state, saveState, loadState, startGame, winGame, failGame, spawnSparks };
-
-})(); // end IIFE
-</script>
+  </script>
 </body>
 </html>
